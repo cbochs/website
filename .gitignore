@@ -1,2 +1,6 @@
 __pycache__
 .vscode
+
+*.pyc
+flaskapp.cfg
+token_info.txt

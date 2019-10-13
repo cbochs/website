@@ -3,8 +3,8 @@
 def handle_cursor(cursor_loc=None, limit=0):
     def decorator(api_call):
         def wrapper(self, *args, **kwargs):
-            no_cursor = kwargs.pop('no_cursor', False)
-            if no_cursor:
+            follow_cursor = kwargs.pop('follow_cursor', False)
+            if follow_cursor:
                 if limit > 0:
                     kwargs.update(limit=limit)
                 

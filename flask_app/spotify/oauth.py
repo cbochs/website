@@ -3,73 +3,108 @@ from time import time
 from urllib.parse import urlencode
 
 import requests
+from flask import json
 
-from flask_app import app
-
-
-def authorization_url(client_id=None, redirect_uri=None, scope=None):
-    SPOTIFY_OAUTH_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'
-
-    params = {
-        'client_id': client_id,
-        'response_type': 'code',
-        'redirect_uri': redirect_uri,
-        'scope': scope}
-    
-    return SPOTIFY_OAUTH_AUTHORIZE_URL + '?' + urlencode(params)
+from flask_app.spotify.credentials import SpotifyClientCredentials
 
 
-def request_access_token(code, client_id=None, client_secret=None, redirect_uri=None):
-    SPOTIFY_OAUTH_TOKEN_URL = 'https://accounts.spotify.com/api/token'
-
-    data = {
-        'client_id': client_id,
-        'client_secret': client_secret,
-        'grant_type': 'authorization_code',
-        'code': code,
-        'redirect_uri': redirect_uri}
-    # headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-
-    app.logger.info('Requesting new access token')
-    response = requests.post(SPOTIFY_OAUTH_TOKEN_URL, data=data)
-
-    if response.status_code != 200:
-        app.logger.error(response.reason)
-        token_info = None
-    else:
-        token_info = response.json()
-        token_info = _add_expiry_time(token_info)
-
-    return token_info
+class SpotifyOAuthException(BaseException):
+    pass
 
 
-def refresh_access_token(token_info, client_id=None, client_secret=None, redirect_uri=None):
-    SPOTIFY_OAUTH_TOKEN_URL = 'https://accounts.spotify.com/api/token'
+class SpotifyOAuth(object):
+    @staticmethod
+    def authorization_url(credentials, scope=None):
+        SPOTIFY_OAUTH_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'
 
-    data = {
-        'client_id': client_id,
-        'client_secret': client_secret,
-        'grant_type': 'refresh_token',
-        'refresh_token': token_info['refresh_token']}
-    # headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+        params = {
+            'client_id': credentials.client_id,
+            'response_type': 'code',
+            'redirect_uri': credentials.redirect_uri,
+            'scope': scope or credentials.scope}
+        
+        return SPOTIFY_OAUTH_AUTHORIZE_URL + '?' + urlencode(params)
 
-    app.logger.info('Requesting refreshed access token')
-    response = requests.post(SPOTIFY_OAUTH_TOKEN_URL, data=data)
 
-    if response.status_code != 200:
-        app.logger.error(response.reason)
-    else:
-        # keep old token in case no new token provided
-        refresh_token = token_info['refresh_token']
+    @staticmethod
+    def request_access_token(credentials, code):
+        SPOTIFY_OAUTH_TOKEN_URL = 'https://accounts.spotify.com/api/token'
 
-        token_info = response.json()
-        token_info = _add_expiry_time(token_info)
+        data = {
+            'client_id': credentials.client_id,
+            'client_secret': credentials.client_secret,
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': credentials.redirect_uri}
+        # headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
-        if 'refresh_token' not in token_info:
-            token_info['refresh_token'] = refresh_token
-    
-    return token_info
+        # app.logger.info('Requesting new access token')
+        response = requests.post(SPOTIFY_OAUTH_TOKEN_URL, data=data)
 
+        if response.status_code != 200:
+            app.logger.error(response.reason)
+            token_info = None
+        else:
+            token_info = response.json()
+            token_info = _add_expiry_time(token_info)
+            _save_token_info(credentials, token_info)
+
+        return token_info
+
+
+    @staticmethod
+    def refresh_access_token(credentials, token_info):
+        SPOTIFY_OAUTH_TOKEN_URL = 'https://accounts.spotify.com/api/token'
+
+        data = {
+            'client_id': credentials.client_id,
+            'client_secret': credentials.client_secret,
+            'grant_type': 'refresh_token',
+            'refresh_token': token_info['refresh_token']}
+        # headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+
+        # app.logger.info('Requesting refreshed access token')
+        response = requests.post(SPOTIFY_OAUTH_TOKEN_URL, data=data)
+
+        if response.status_code != 200:
+            # app.logger.error(response.reason)
+            token_info = None
+        else:
+            # Keep old token in case no new token provided
+            refresh_token = token_info['refresh_token']
+
+            token_info = response.json()
+            token_info = _add_expiry_time(token_info)
+
+            if 'refresh_token' not in token_info:
+                token_info['refresh_token'] = refresh_token
+            
+            _save_token_info(credentials, token_info)
+        
+        return token_info
+
+
+    @staticmethod
+    def load_token_info(credentials):
+        token_save_location = credentials.token_save_location
+
+        # app.logger.info(f'Retrieved token info from {token_save_location}')
+        with open(token_save_location, 'r') as ifile:
+            token_info = json.load(ifile)
+
+        if token_expired(token_info):
+            token_info = SpotifyOAuth.refresh_access_token(credentials, token_info)
+
+        return token_info
+
+
+def _save_token_info(credentials, token_info):
+    token_save_location = credentials.token_save_location
+
+    # app.logger.info(f'Saved token info to {token_save_location}')
+    with open(token_save_location, 'w') as ofile:
+        json.dump(token_info, ofile)
+        
 
 def _add_expiry_time(token_info):
     dt = datetime.utcnow() + timedelta(seconds=token_info['expires_in'])
@@ -81,10 +116,3 @@ def _add_expiry_time(token_info):
 def token_expired(token_info):
     now = int((datetime.utcnow() + timedelta(minutes=5)).timestamp())
     return now > token_info['expires_at']
-
-
-def _format_scope(scopes):
-    if isinstance(scopes, list):
-        return ','.join(scopes)
-    else:
-        return scopes

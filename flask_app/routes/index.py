@@ -1,5 +1,3 @@
-from flask import redirect, request
-
 from flask_app import app
 
 @app.route('/')

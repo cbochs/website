@@ -3,12 +3,11 @@ import os
 
 import requests
 
-from flask_app import app
-from flask_app.spotify.oauth import token_expired, refresh_access_token
 from flask_app.spotify.helper import handle_bulk, handle_cursor
+from flask_app.spotify.oauth import SpotifyOAuth, token_expired
 
 
-class SpotifyException(BaseException):
+class SpotifyAPIException(BaseException):
     pass
 
 
@@ -16,25 +15,9 @@ class Spotify(object):
 
     API_URL = 'https://api.spotify.com/v1/'
 
-    def __init__(self, token_info, app=None, client_id=None, client_secret=None, redirect_uri=None):
+    def __init__(self, token_info, credentials):
         self.token_info = token_info
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.redirect_uri = redirect_uri
-
-        if app is not None:
-            self.init_app(app)
-
-
-    def init_app(self, app):
-        if client_id is None:
-            self.client_id = app.config.get('CLIENT_ID', None)
-        
-        if client_secret is None:
-            self.client_secret = app.config.get('CLIENT_SECRET', None)
-        
-        if redirect_uri is None:
-            self.redirect_uri = app.config.get('REDIRECT_URI', None)
+        self.credentials = credentials
 
     
     def me(self, **kwargs):
@@ -92,18 +75,14 @@ class Spotify(object):
         response = requests.get(url, headers=headers, params=kwargs)
 
         if response.status_code != 200:
-            print(response.json())
-            raise SpotifyException(response.reason)
+            raise SpotifyAPIException(response.reason)
 
         return response.json()
 
     
     def _headers(self):
         if token_expired(self.token_info):
-            self.token_info = refresh_access_token(self,token_info,
-                                                   client_id=self.client_id,
-                                                   client_secret=self.client_secret,
-                                                   redirect_uri=self.redirect_uri)
+            self.token_info = SpotifyOAuth.refresh_access_token(self.credentials, self.token_info)
 
         token_type = self.token_info['token_type']
         access_token = self.token_info['access_token']

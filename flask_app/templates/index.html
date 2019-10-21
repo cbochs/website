@@ -1,4 +1,18 @@
 {% extends "layout.html" %}
 {% block content %}
-  <h1>Home</h1>
+
+  {% for track in recently_played %}
+
+    <article class="media content-section">
+      <div class="media-body">
+        <h2><a href="#" class="article-title">{{ track['track']['name'] }}</a></h2>
+        <div class="article-metadata">
+          <a href="#" class="mr-2">{{ track['track']['artists'] }}</a>
+          <small class="text-muted">{{ track['played_at'] }}</small>
+        </div>
+      </div>
+    </article>
+
+  {% endfor %}
+
 {% endblock content %}

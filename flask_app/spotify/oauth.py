@@ -42,7 +42,7 @@ class SpotifyOAuth(object):
         response = requests.post(SPOTIFY_OAUTH_TOKEN_URL, data=data)
 
         if response.status_code != 200:
-            app.logger.error(response.reason)
+            # app.logger.error(response.reason)
             token_info = None
         else:
             token_info = response.json()
@@ -116,7 +116,7 @@ def _save_token_info(credentials, token_info):
 
 def _add_expiry_time(token_info):
     dt = datetime.utcnow() + timedelta(seconds=token_info['expires_in'])
-    token_info['expires_dt'] = dt
+    token_info['expires_dt'] = str(dt)
     token_info['expires_at'] = int(dt.timestamp())
     return token_info
 

@@ -4,6 +4,7 @@ from flask import jsonify
 from flask_app import app
 from flask_app.formatter.play_history import format_play_history
 from flask_app.formatter.playlist import format_simple_playlist
+from flask_app.formatter.user import format_user
 from flask_app.formatter.util import format_all
 from flask_app.spotify.api import Spotify
 from flask_app.spotify.credentials import SpotifyClientCredentials
@@ -18,7 +19,10 @@ def me():
     token_info = SpotifyOAuth.load_token_info(credentials)
     spotify = Spotify(token_info, credentials)
 
-    return jsonify(spotify.me())
+    me = spotify.me()
+    me = format_user(me)
+
+    return jsonify(me)
 
 
 @app.route('/spotify/recently_played')

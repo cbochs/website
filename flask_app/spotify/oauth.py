@@ -1,9 +1,9 @@
+import json
 from datetime import datetime, timedelta
 from time import time
 from urllib.parse import urlencode
 
 import requests
-from flask import json
 
 from flask_app.spotify.credentials import SpotifyClientCredentials
 
@@ -82,6 +82,14 @@ class SpotifyOAuth(object):
             _save_token_info(credentials, token_info)
         
         return token_info
+
+    
+    @staticmethod
+    def update_access_token(credentials, token_info):
+        if token_expired(token_info):
+            return SpotifyOAuth.refresh_access_token(credentials, token_info)
+        else:
+            return token_info
 
 
     @staticmethod

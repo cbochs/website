@@ -4,7 +4,7 @@ import os
 import requests
 
 from flask_app.spotify.helper import handle_bulk, handle_cursor
-from flask_app.spotify.oauth import SpotifyOAuth, token_expired
+from flask_app.spotify.oauth import SpotifyOAuth
 
 
 class SpotifyAPIException(BaseException):
@@ -81,8 +81,7 @@ class Spotify(object):
 
     
     def _headers(self):
-        if token_expired(self.token_info):
-            self.token_info = SpotifyOAuth.refresh_access_token(self.credentials, self.token_info)
+        self.token_info = SpotifyOAuth.update_access_token(self.credentials, self.token_info)
 
         token_type = self.token_info['token_type']
         access_token = self.token_info['access_token']

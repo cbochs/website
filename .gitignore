@@ -1,6 +1,8 @@
 __pycache__
 .vscode
 
+discover_weekly
+
 *.pyc
 flaskapp.cfg
 token_info.txt

@@ -1,5 +1,5 @@
 body {
-  background: #fafafa;
+  background-color: #000000;
   color: #333333;
   margin-top: 5rem;
 }
@@ -8,8 +8,23 @@ h1, h2, h3, h4, h5, h6 {
   color: #444444;
 }
 
+.bottom-icon {
+  position: fixed;
+  bottom:0;
+  right:0;
+  padding: 0;
+  margin: 0;
+  width: auto;
+  height: 20%;
+  z-index: -1;
+}
+
 .bg-steel {
   background-color: #5f788a;
+}
+
+.bg-black {
+  background-color: #000000ee;
 }
 
 .site-header .navbar-nav .nav-link {

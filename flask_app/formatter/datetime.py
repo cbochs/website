@@ -29,8 +29,5 @@ def to_datetime(date_string, precision):
 
 
 def from_datetime(date_obj, precision):
-    if precision not in lookup:
-        print(f'ERROR -- NO DATETIME FOUND FOR {date_string}')
-        return None
-
-    return datetime.strftime(date_obj, lookup[precision])
+    datetime_format = lookup[precision] if precision in lookup else precision
+    return datetime.strftime(date_obj, datetime_format)

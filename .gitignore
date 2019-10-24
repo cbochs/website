@@ -3,6 +3,7 @@ __pycache__
 
 discover_weekly
 
+.DS_Store
 *.pyc
 flaskapp.cfg
 token_info.txt

@@ -25,53 +25,58 @@ class Spotify(object):
 
 
     @handle_cursor(limit=50)
-    def recently_played(self, follow_cursor=True, **kwargs):
+    def recently_played(self, **kwargs):
         return self._get('me/player/recently-played', **kwargs)
 
     
     @handle_cursor(limit=50)
-    def my_playlists(self, follow_cursor=True, **kwargs):
+    def my_playlists(self, **kwargs):
         return self._get('me/playlists', **kwargs)
 
     
     @handle_cursor(limit=50)
-    def my_tracks(self, follow_cursor=True, **kwargs):
+    def my_tracks(self, **kwargs):
         return self._get('me/tracks', **kwargs)
 
-
+    @handle_cursor('tracks')
     @handle_bulk(limit=20)
-    def albums(self, ids=[], **kwargs):
+    def albums(self, **kwargs):
         return self._get('albums', **kwargs)
 
 
     @handle_bulk(limit=50)
-    def artists(self, ids=[], **kwargs):
+    def artists(self, **kwargs):
         return self._get(f'artists/{id}', **kwargs)
 
 
     @handle_bulk(limit=100)
-    def tracks(self, ids=[], **kwargs):
+    def tracks(self, **kwargs):
         return self._get(f'tracks/{id}', **kwargs)
 
     
     @handle_cursor(limit=50)
-    def album_tracks(self, id, follow_cursor=True, **kwargs):
+    def album_tracks(self, id, **kwargs):
         return self._get(f'albums/{id}/tracks', **kwargs)
 
 
     @handle_cursor(limit=50)
-    def artist_albums(self, id, follow_cursor=True, **kwargs):
+    def artist_albums(self, id, **kwargs):
         return self._get(f'artists/{id}/albums', **kwargs)
 
 
     @handle_cursor('tracks')
-    def playlist(self, id, follow_cursor=False, **kwargs):
+    def playlist(self, id, **kwargs):
         return self._get(f'playlists/{id}', **kwargs)
 
 
     @handle_cursor(limit=100)
-    def playlist_tracks(self, id, follow_cursor=True, **kwargs):
+    def playlist_tracks(self, id, **kwargs):
         return self._get(f'playlists/{id}/tracks', **kwargs)
+
+    
+    @handle_bulk(limit=100)
+    def add_tracks(self, id, uris, **kwargs):
+        return self._post(f'playlists/{id}/tracks', uris=uris)
 
 
     def _next(self, result):
@@ -85,10 +90,18 @@ class Spotify(object):
         response = requests.get(url, headers=headers, params=kwargs)
 
         if response.status_code != 200:
-            print(url)
             raise SpotifyAPIException(response.reason)
 
         return response.json()
+
+    def _post(self, endpoint, **kwargs):
+        url = endpoint if self.API_URL in endpoint else os.path.join(self.API_URL, endpoint)
+        headers = self._headers()
+
+        response = requests.post(url, headers=headers, json=kwargs)
+
+        if response.status_code != 201:
+            raise SpotifyAPIException(response.reason)
 
     
     def _headers(self):

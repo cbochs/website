@@ -3,12 +3,11 @@ import os
 
 import requests
 
-from flask_app import app
-from flask_app.spotify.oauth import token_expired, refresh_access_token
 from flask_app.spotify.helper import handle_bulk, handle_cursor
+from flask_app.spotify.oauth import SpotifyOAuth
 
 
-class SpotifyException(BaseException):
+class SpotifyAPIException(BaseException):
     pass
 
 
@@ -16,25 +15,9 @@ class Spotify(object):
 
     API_URL = 'https://api.spotify.com/v1/'
 
-    def __init__(self, token_info, app=None, client_id=None, client_secret=None, redirect_uri=None):
+    def __init__(self, token_info, credentials):
         self.token_info = token_info
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.redirect_uri = redirect_uri
-
-        if app is not None:
-            self.init_app(app)
-
-
-    def init_app(self, app):
-        if client_id is None:
-            self.client_id = app.config.get('CLIENT_ID', None)
-        
-        if client_secret is None:
-            self.client_secret = app.config.get('CLIENT_SECRET', None)
-        
-        if redirect_uri is None:
-            self.redirect_uri = app.config.get('REDIRECT_URI', None)
+        self.credentials = credentials
 
     
     def me(self, **kwargs):
@@ -55,7 +38,7 @@ class Spotify(object):
     def my_tracks(self, **kwargs):
         return self._get('me/tracks', **kwargs)
 
-
+    @handle_cursor('tracks')
     @handle_bulk(limit=20)
     def albums(self, **kwargs):
         return self._get('albums', **kwargs)
@@ -63,12 +46,22 @@ class Spotify(object):
 
     @handle_bulk(limit=50)
     def artists(self, **kwargs):
-        return self._get('artists', **kwargs)
+        return self._get(f'artists/{id}', **kwargs)
 
 
     @handle_bulk(limit=100)
     def tracks(self, **kwargs):
-        return self._get('tracks', **kwargs)
+        return self._get(f'tracks/{id}', **kwargs)
+
+    
+    @handle_cursor(limit=50)
+    def album_tracks(self, id, **kwargs):
+        return self._get(f'albums/{id}/tracks', **kwargs)
+
+
+    @handle_cursor(limit=50)
+    def artist_albums(self, id, **kwargs):
+        return self._get(f'artists/{id}/albums', **kwargs)
 
 
     @handle_cursor('tracks')
@@ -79,6 +72,11 @@ class Spotify(object):
     @handle_cursor(limit=100)
     def playlist_tracks(self, id, **kwargs):
         return self._get(f'playlists/{id}/tracks', **kwargs)
+
+    
+    @handle_bulk(limit=100)
+    def add_tracks(self, id, uris, **kwargs):
+        return self._post(f'playlists/{id}/tracks', uris=uris)
 
 
     def _next(self, result):
@@ -92,18 +90,22 @@ class Spotify(object):
         response = requests.get(url, headers=headers, params=kwargs)
 
         if response.status_code != 200:
-            print(response.json())
-            raise SpotifyException(response.reason)
+            raise SpotifyAPIException(response.reason)
 
         return response.json()
 
+    def _post(self, endpoint, **kwargs):
+        url = endpoint if self.API_URL in endpoint else os.path.join(self.API_URL, endpoint)
+        headers = self._headers()
+
+        response = requests.post(url, headers=headers, json=kwargs)
+
+        if response.status_code != 201:
+            raise SpotifyAPIException(response.reason)
+
     
     def _headers(self):
-        if token_expired(self.token_info):
-            self.token_info = refresh_access_token(self,token_info,
-                                                   client_id=self.client_id,
-                                                   client_secret=self.client_secret,
-                                                   redirect_uri=self.redirect_uri)
+        self.token_info = SpotifyOAuth.update_access_token(self.credentials, self.token_info)
 
         token_type = self.token_info['token_type']
         access_token = self.token_info['access_token']

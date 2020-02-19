@@ -1,10 +1,18 @@
 __pycache__
 .vscode
+.DS_Store
 
 ##### FLASK GITIGNORE #####
 
+
+*.pyc
+
 flask_app/static
 flask_app/templates
+
+flaskapp.cfg
+discover_weekly
+token_info.txt
 
 ##### VUE-CLI GITIGNORE #####
 

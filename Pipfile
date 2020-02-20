@@ -7,6 +7,9 @@ verify_ssl = true
 
 [packages]
 flask = "*"
+flask-pymongo = "*"
+flask-sqlalchemy = "*"
+python-dotenv = "*"
 requests = "*"
 
 [requires]

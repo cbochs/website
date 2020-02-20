@@ -7,8 +7,11 @@ verify_ssl = true
 
 [packages]
 flask = "*"
+flask-migrate = "*"
 flask-pymongo = "*"
 flask-sqlalchemy = "*"
+mysqlclient = "*"
+pyjwt = "*"
 python-dotenv = "*"
 requests = "*"
 

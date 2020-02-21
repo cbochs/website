@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_apscheduler import APScheduler
 from flask_migrate import Migrate
 from flask_pymongo import PyMongo
 from flask_sqlalchemy import SQLAlchemy
@@ -10,6 +11,8 @@ app.config.from_pyfile('flaskapp.cfg')
 app.json_encoder = JSONEncoder
 
 Session(app)
+
+scheduler = APScheduler(app=app)
 
 mongodb = PyMongo(app)
 mysqldb = SQLAlchemy(app)

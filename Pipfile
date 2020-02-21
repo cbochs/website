@@ -16,6 +16,7 @@ pyjwt = "*"
 python-dotenv = "*"
 requests = "*"
 werkzeug = "==0.16.0"
+flask-apscheduler = "*"
 
 [requires]
 python_version = "3.6"

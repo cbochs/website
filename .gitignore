@@ -11,6 +11,8 @@ data
 flask_app/static
 flask_app/templates
 
+flask_session
+
 flaskapp.cfg
 discover_weekly
 token_info.txt

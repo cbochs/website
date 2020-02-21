@@ -7,17 +7,17 @@ from flask_app.spotify.helper import handle_bulk, handle_cursor
 from flask_app.spotify.oauth import SpotifyOAuth
 
 
-class SpotifyAPIException(BaseException):
+class SpotifyApiException(BaseException):
     pass
 
 
-class Spotify(object):
+class SpotifyApi(object):
 
     API_URL = 'https://api.spotify.com/v1/'
 
-    def __init__(self, token_info, credentials):
-        self.token_info = token_info
+    def __init__(self, credentials, token_info):
         self.credentials = credentials
+        self.token_info = token_info
 
     
     def me(self, **kwargs):
@@ -90,7 +90,7 @@ class Spotify(object):
         response = requests.get(url, headers=headers, params=kwargs)
 
         if response.status_code != 200:
-            raise SpotifyAPIException(response.reason)
+            raise SpotifyApiException(response.reason)
 
         return response.json()
 
@@ -101,14 +101,14 @@ class Spotify(object):
         response = requests.post(url, headers=headers, json=kwargs)
 
         if response.status_code != 201:
-            raise SpotifyAPIException(response.reason)
+            raise SpotifyApiException(response.reason)
 
     
     def _headers(self):
         self.token_info = SpotifyOAuth.update_access_token(self.credentials, self.token_info)
 
-        token_type = self.token_info['token_type']
-        access_token = self.token_info['access_token']
+        token_type = self.token_info.token_type
+        access_token = self.token_info.access_token
         headers = {
             'Authorization': f'{token_type} {access_token}',
             'Content-Type': 'application/json'}

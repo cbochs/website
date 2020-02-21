@@ -11,17 +11,21 @@ class User(db.Model):
     email    = db.Column(db.String(320), unique=True, nullable=False)
     username = db.Column(db.String(80),  unique=True, nullable=False)
     password = db.Column(db.String(128),              nullable=False)
+    spotify_user = db.relationship('SpotifyUser', back_populates='user', lazy=True, uselist=False)
 
-    def __init__(self, email, username, password):
-        self.email    = email
-        self.username = username
-        self.password = generate_password_hash(password, method='sha256')
+    def __init__(self, **kwargs):
+        self.email    = kwargs.get('email')
+        self.username = kwargs.get('username')
+        self.password = generate_password_hash(kwargs.get('password'), method='sha256')
 
     def to_dict(self):
         return dict(
             id=self.id,
             email=self.email,
             username=self.username)
+
+    def __repr__(self):
+        return f'<username: {self.username}, email: {self.email}, id: {self.id}>'
 
     @classmethod
     def find_user(cls, **kwargs):
@@ -48,43 +52,3 @@ class User(db.Model):
             return None
 
         return user
-
-    def __repr__(self):
-        return f'<username: {self.username}, email: {self.email}, id: {self.id}>'
-
-    # @classmethod
-    # def authenticate(cls, **kwargs):
-    #     email    = kwargs.get('email')
-    #     username = kwargs.get('username')
-    #     password = kwargs.get('password')
-
-    #     if not email and not username:
-    #         return None
-
-    #     if not password:
-    #         return None
-        
-    #     return cls.query.filter_by(email=email).first()
-
-# https://developer.spotify.com/documentation/general/guides/authorization-guide/
-# class SpotifyAccessToken(db.Model):
-#     __tablename__ = 'spotify_tokens'
-
-#     id            = Column(Integer, primary_key=True)
-#     access_token  = Column(String(255), nullable=False)
-#     expires_at    = Column(Integer)
-#     expires_dt    = Column(DateTime)
-#     expires_in    = Column(Integer)
-#     refresh_token = Column(String(255))
-#     scope         = Column(String(255)) # TODO: update to a better value
-#     token_type    = Column(String(6))   # should always be 'Bearer'
-#     user          = db.relationship('User', backref='access_token', lazy=True, uselist=False)
-
-# {
-#     "access_token": "BQBoLQCncPdSzChxqGEX8HxOwBzyjxz6wwJtcyljZRKc4Y9wIujYfr-VaO2N46dJUPukfU6ZoO0x-QOuo8qhHkGTISu8-WARqX-YuCjl-eJRHL1wsWRfWC3ucTbvdUnIzWVMzqKIYhHF-8LjZ0e8T0nv_Yn3mY-yZnFCTTq-BbJ0Ax0O17UQ5LOAVvxuvZK5odNppnynLq0i3BOso5EMNnrEYlGcklE3nRyBte21",
-#     "token_type": "Bearer",
-#     "expires_in": 3600,
-#     "scope": "playlist-read-private playlist-read-collaborative user-library-read playlist-modify-private playlist-modify-public user-read-recently-played",
-#     "expires_dt": "2020-02-20 19:44:16.012404",
-#     "expires_at": 1582253056,
-#     "refresh_token": "AQAZ2PefAjDVQbjmVKwl1EeGl2lCyPmBAsYkT4flzCK9zuiaD8cBFAUHmZgm38PZItQBrqPuzCKMg9Whk8zXl6pPa9bpl-khDq8O_d13lTXFnaFEY1k9E08M4hefv-Mi3B0PoA"}

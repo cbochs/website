@@ -47,6 +47,23 @@ def login():
 def logout():
     authenticated = session.get('authenticated', False)
     if authenticated:
+        user = User.find_user(**session)
+        app.logger.info(f'Logging out user {user}')
+
         session['authenticated'] = False
         session.pop('username', None)
         session.pop('email', None)
+    else:
+        app.logger.info(f'User is not logged in')
+    
+    return 'Logged out.', 200
+
+@app.route('/api/info', methods=('GET',))
+def info():
+    response = {
+        'username': session.get('username'),
+        'email': session.get('email'),
+        'authenticated': session.get('authenticated')
+    }
+
+    return make_response(jsonify(response), 200)

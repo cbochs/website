@@ -9,11 +9,13 @@ verify_ssl = true
 flask = "*"
 flask-migrate = "*"
 flask-pymongo = "*"
+flask-session = "*"
 flask-sqlalchemy = "*"
 mysqlclient = "*"
 pyjwt = "*"
 python-dotenv = "*"
 requests = "*"
+werkzeug = "==0.16.0"
 
 [requires]
 python_version = "3.6"

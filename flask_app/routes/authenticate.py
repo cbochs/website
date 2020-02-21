@@ -12,8 +12,8 @@ def register():
     data = request.get_json()
     user = User.find_user(**data)
 
-    # TODO: check the session that the user isn't already authenticated
-    
+    # TODO: ensure use is authenticated in session    
+
     if user is None:
         user = User(**data)
         mysqldb.session.add(user)
@@ -30,7 +30,7 @@ def login():
     data = request.get_json()
     user = User.authenticate(**data)
 
-    # TODO: check the session that the user isn't already authenticated
+    # TODO: ensure use is authenticated in session
 
     if user is None:
         app.logger.info(f'Failed to authenticate user')

@@ -1,16 +1,28 @@
-from flask import jsonify, request, redirect, make_response
+from flask import jsonify, make_response, redirect, request, session
 
-from flask_app import app, spotify
+from flask_app import app, spotify, mysqldb
 from flask_app.models.mysql.spotify_access_token import SpotifyAccessToken
 from flask_app.models.mysql.spotify_user import SpotifyUser
+from flask_app.models.mysql.user import User
 from flask_app.spotify.oauth import SpotifyOAuth
+
 
 @app.route('/api/spotify/authorize', methods=('GET',))
 def spotify_authorize():
     error = request.values.get('error')
     code = request.values.get('code')
 
-    # TODO: check the session that the user isn't already authenticated
+    # TODO: ensure use is authenticated in session
+    user = User.find_user(email=session['email'])
+
+    if user.spotify_user:
+        if user.spotify_user.access_token.expired():
+            mysqldb.session.delete(user.spotify_user.access_token)
+            mysqldb.session.delete(user.spotify_user)
+            mysqldb.session.commit()
+        else:
+            app.logger.info(f'User has already authorized for Spotify')
+            return make_response('Already authorized.', 200)
     
     if error:
         app.logger.error(f'Could not authorize user {user}. Error: {error}')
@@ -21,14 +33,15 @@ def spotify_authorize():
         spotify_api = spotify.connect(token_info)
         me = spotify_api.me()
 
-        access_token = SpotifyAccessToken(token_info)
-        spotify_user = SpotifyUser(me)
+        spotify_user = SpotifyUser(me, user)
+        access_token = SpotifyAccessToken(token_info, spotify_user)
 
-        app.logger.info(f'token info: {token_info}')
-        app.logger.info(f'me: {me}')
+        mysqldb.session.add(access_token)
+        mysqldb.session.add(spotify_user)
+        mysqldb.session.commit()
 
         app.logger.info('Obtained access code!')
-        return make_response('Authorized user.', 200)
+        return make_response('Authorized.', 200)
     else:
         app.logger.info('Requesting Spotify access code')
         return redirect(spotify.authorization_url())
@@ -37,31 +50,3 @@ def spotify_authorize():
 @app.route('/api/spotify/me', methods=('GET',))
 def me():
     pass
-    # TODO: check the session that the user isn't already authenticated
-
-
-
-
-
-# @app.route('/spotify/recently_played')
-# def recently_played():
-#     credentials = SpotifyClientCredentials(app=app)
-#     token_info = SpotifyOAuth.load_token_info(credentials)
-#     spotify = Spotify(token_info, credentials)
-
-#     me = spotify.me()
-#     recently_played = spotify.recently_played(follow_cursor=True)
-#     recently_played = format_all(recently_played, format_play_history, user=me)
-
-#     return jsonify(recently_played)
-
-# @app.route('/spotify/playlists')
-# def playlists():
-#     credentials = SpotifyClientCredentials(app=app)
-#     token_info = SpotifyOAuth.load_token_info(credentials)
-#     spotify = Spotify(token_info, credentials)
-
-#     playlists = spotify.my_playlists(follow_cursor=True)
-#     playlists = format_all(playlists, format_simple_playlist)
-    
-#     return jsonify(playlists)

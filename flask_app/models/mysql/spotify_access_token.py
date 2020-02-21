@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from flask_app import mysqldb as db
 
 # https://developer.spotify.com/documentation/general/guides/authorization-guide/
@@ -12,16 +14,21 @@ class SpotifyAccessToken(db.Model):
     refresh_token = db.Column(db.String(255), nullable=False)
     scope         = db.Column(db.String(255), nullable=False) # TODO: handle scope storing better (array?)
     token_type    = db.Column(db.String(6),   nullable=False) # should always be 'Bearer'
-    spotify_user  = db.relationship('SpotifyUser', back_populates='access_token', lazy=True, uselist=False)
+    spotify_id    = db.Column(db.String(80), db.ForeignKey('spotify_users.id'), nullable=False)
 
-    def __init__(self, token_info):
+    def __init__(self, token_info, spotify_user):
         self.access_token  = token_info.access_token
         self.expires_at    = token_info.expires_at
         self.expires_dt    = token_info.expires_dt
         self.expires_in    = token_info.expires_in
         self.refresh_token = token_info.refresh_token
-        self.scope         - token_info.scope
+        self.scope         = token_info.scope
         self.token_type    = token_info.token_type
+        self.spotify_id    = spotify_user.id
+
+    def expired(self):
+        now = int((datetime.utcnow() + timedelta(minutes=5)).timestamp())
+        return now > self.expires_at
 
     def __repr__(self):
         return f'<token: {self.access_token[:16]}, refresh_token: {self.refresh_token[:16]}, expires_at: {self.expires_at}, scopes: {len(self.scope)}'

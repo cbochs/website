@@ -7,11 +7,8 @@
       <input v-model.trim="password" placeholder="password" type="password">
       <input type="submit" value="Register">
     </form>
-    <div v-if="info">
-      <p>{{ info.user_id }}</p>
-      <p>{{ info.username }}</p>
-      <p>{{ info.email }}</p>
-    </div>
+    <p v-if="user">{{ user.username }}</p>
+    <p v-if="spotify_user">{{ spotify_user.id }}</p>
     <br>
     <button @click="login">Login</button>
     <br>
@@ -34,7 +31,8 @@ export default {
       email: null,
       username: null,
       password: null,
-      info: null
+      user: null,
+      spotify_user: null
     }
   },
   methods: {
@@ -74,18 +72,21 @@ export default {
       logoutUser()
         .then(response => console.log(response.status + ' ' + response.data))
         .catch(error => console.log(error.message))
+      this.user = null
     },
     currentUser() {
       getCurrentUser()
-        .then(response => response.data)
-        .then(data => this.info = data)
+        .then(response => this.user = response.data)
+        .catch(error => console.log(error.message))
     },
     me() {
       spotifyMe()
         .then(response => {
-          console.log(response.data)
-          if (response.data.auth_url)
+          if (response.data.auth_url) {
             window.location = response.data.auth_url
+          } else {
+            this.spotify_user = response.data
+          }
         })
         .catch(error => console.log(error.message))
     }

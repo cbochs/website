@@ -19,7 +19,7 @@ def format_simple_track(result):
 
 def format_track(result):
     if result['is_local']:
-        print(f'SKIPPING TRACK BECAUSE IT IS LOCAL {result["name"]}')
+        print(f"Skipping local track: {result['name']}")
         return None
 
     track = {

@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_apscheduler import APScheduler
+from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_pymongo import PyMongo
 from flask_session import Session
@@ -11,6 +12,7 @@ app = Flask(__name__)
 app.config.from_pyfile('flaskapp.cfg')
 app.json_encoder = JSONEncoder
 
+CORS(app, supports_credentials=True)
 Session(app)
 
 scheduler = APScheduler(app=app)

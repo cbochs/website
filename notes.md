@@ -26,6 +26,7 @@ brew services start mongodb-community
 
 ```
 show databases
+delete from <db>.<table> [where ...]
 ```
 
 ### MySQL

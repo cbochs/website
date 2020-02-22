@@ -18,12 +18,6 @@ class User(db.Model):
         self.username = kwargs.get('username')
         self.password = generate_password_hash(kwargs.get('password'), method='sha256')
 
-    def to_dict(self):
-        return dict(
-            id=self.id,
-            email=self.email,
-            username=self.username)
-
     def __repr__(self):
         return f'<username: {self.username}, email: {self.email}, id: {self.id}>'
 

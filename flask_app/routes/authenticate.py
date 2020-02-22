@@ -42,6 +42,7 @@ def login():
         app.logger.info(f'Failed to authenticate user')
         return make_response('Failed to authenticate.', 401)
     else:
+        session.pop('spotify_id')
         session['user_id'] = user.id
         app.logger.info(f'Authenticated user {user}')
         return make_response('Authenticated.', 200)

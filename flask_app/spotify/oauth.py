@@ -3,8 +3,6 @@ from urllib.parse import urlencode
 
 import requests
 
-from flask_app.spotify.token_info import SpotifyTokenInfo
-
 
 class SpotifyOAuthException(BaseException):
     pass
@@ -40,7 +38,7 @@ class SpotifyOAuth(object):
         response = requests.post(SPOTIFY_OAUTH_TOKEN_URL, data=data)
 
         if response.status_code == 200:
-            token_info = SpotifyTokenInfo(**response.json())
+            token_info = response.json()
         else:
             token_info = None
 
@@ -61,16 +59,8 @@ class SpotifyOAuth(object):
         response = requests.post(SPOTIFY_OAUTH_TOKEN_URL, data=data)
 
         if response.status_code == 200:
-            token_info = SpotifyTokenInfo.refresh_token(token_info, **response.json())
+            token_info = response.json()
         else:
             token_info = None
         
         return token_info
-
-    
-    @staticmethod
-    def update_access_token(credentials, token_info):
-        if token_info.expired():
-            return SpotifyOAuth.refresh_access_token(credentials, token_info)
-        else:
-            return token_info

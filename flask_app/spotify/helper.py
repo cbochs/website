@@ -1,6 +1,17 @@
 
 
 def handle_cursor(cursor_loc=None, limit=0):
+    """
+    A decorator method to follow cursor-wrapped objects in Spotify's API calls.
+    TODO: ...
+
+    Arguments:
+        cursor_loc (string):
+        limit (int): 
+
+    Returns:
+        method: the decorated api call
+    """
     def decorator(api_call):
         def wrapper(self, *args, **kwargs):
             follow_cursor = kwargs.pop('follow_cursor', False)
@@ -40,6 +51,16 @@ def handle_cursor(cursor_loc=None, limit=0):
 
 
 def handle_bulk(limit):
+    """
+    A decorator method to handle bult requests to Spotify's API.
+    TODO: ...
+
+    Arguments:
+        limit (int):
+
+    Returns:
+        method: the decorated api call
+    """
     def decorator(api_call):
         def wrapper(self, *args, **kwargs):
             call_name = api_call.__name__

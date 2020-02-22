@@ -1,13 +1,25 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import Home from '../views/Home.vue'
 
 Vue.use(VueRouter)
 
-const routes = []
+const routes = [
+  {
+    path: '/',
+    name: 'Home',
+    component: Home
+  },
+  {
+    path: '/lazy',
+    name: 'Lazy',
+    component: () => import('../views/Lazy.vue')
+  }
+]
 
 const router = new VueRouter({
   mode: 'history',
-  hash: false,
+  base: process.env.BASE_URL,
   routes
 })
 

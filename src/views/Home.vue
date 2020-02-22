@@ -18,11 +18,14 @@
     <button @click="logout">Logout</button>
     <br>
     <button @click="currentUser">Get User</button>
+    <br>
+    <button @click="me">Me!</button>
   </div>
 </template>
 
 <script>
-import { getCurrentUser, registerUser, loginUser, logoutUser } from '@/api'
+import axios from 'axios'
+import { getCurrentUser, registerUser, loginUser, logoutUser, spotifyMe } from '@/api'
 export default {
   name: 'Home',
   components: {},
@@ -36,28 +39,32 @@ export default {
   },
   methods: {
     register() {
-      if (this.email !== null && this.email !== ''
-          && this.username !== null && this.username !== ''
-          && this.password !== null && this.password !== '')
+      if (this.email !== null || this.email !== ''
+          && this.username !== null || this.username !== ''
+          && this.password !== null || this.password !== '') {
+        console.log('empty fields when registering')
         return
+      }
       
       console.log('registering user')
       registerUser(this.email, this.username, this.password)
-        .then(response => console.log(response.status))
+        .then(response => console.log(response.status + ' ' + response.data))
         .catch(error => console.log(error.message))
       this.email = ''
       this.username = ''
       this.password = ''
     },
     login() {
-      if (this.email !== null && this.email !== ''
-          && this.username !== null && this.username !== ''
-          && this.password !== null && this.password !== '')
+      if (this.email !== null || this.email !== ''
+          && this.username !== null || this.username !== ''
+          && this.password !== null || this.password !== '') {
+        console.log('empty fields when logging in')
         return
+      }
 
         console.log('logging user in')
         loginUser(this.email, this.username, this.password)
-          .then(response => console.log(response.status))
+          .then(response => console.log(response.status + ' ' + response.data))
           .catch(error => console.log(error.message))
         this.email = ''
         this.username = ''
@@ -65,13 +72,26 @@ export default {
     },
     logout() {
       logoutUser()
-        .then(response => console.log(response.status))
+        .then(response => console.log(response.status + ' ' + response.data))
         .catch(error => console.log(error.message))
     },
     currentUser() {
       getCurrentUser()
         .then(response => response.data)
         .then(data => this.info = data)
+    },
+    me() {
+      spotifyMe()
+        .then(response => {
+          console.log(response.data)
+          if (response.data.auth_url) {
+            window.location = response.data.auth_url
+          }
+        })
+        .catch(error => {
+          console.log(error.message)
+          console.log(error.response.data)
+        })
     }
   }
 }

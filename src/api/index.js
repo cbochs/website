@@ -26,3 +26,11 @@ export function loginUser(email, username, password) {
 export function logoutUser() {
   return axios.get('/api/logout')
 }
+
+export function spotifyAuthorize(params) {
+  return axios.get('/api/spotify/authorize', {params})
+}
+
+export function spotifyMe() {
+  return axios.get('/api/spotify/me')
+}

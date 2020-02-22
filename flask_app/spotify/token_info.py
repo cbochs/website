@@ -29,6 +29,11 @@ class SpotifyTokenInfo(object):
         self.expires_dt = dt
         self.expires_at = int(dt.timestamp())
 
+    
+    def __repr__(self):
+        return f'<token: {self.access_token[:16]}, refresh_token: {self.refresh_token[:16]}, token_type: {self.token_type}, expires_dt: {self.expires_dt}, scopes: {len(self.scope)}>'
+
+
     @staticmethod
     def refresh_token(token_info, **kwargs):
         new_token_info = SpotifyTokenInfo(**kwargs)

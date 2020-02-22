@@ -55,7 +55,7 @@ class SpotifyOAuth(object):
             'client_id': credentials.client_id,
             'client_secret': credentials.client_secret,
             'grant_type': 'refresh_token',
-            'refresh_token': token_info['refresh_token']}
+            'refresh_token': token_info.refresh_token}
         # headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
         response = requests.post(SPOTIFY_OAUTH_TOKEN_URL, data=data)

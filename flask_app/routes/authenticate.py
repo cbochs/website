@@ -9,10 +9,13 @@ from flask_app.models.mysql.user import User
 
 @app.route('/api/register', methods=('POST',))
 def register():
+    user = User.find_user(id=session.get('user_id'))
+    if user:
+        app.logger.info(f'User is already registered and logged in {user}')
+        return make_response('User already exists.', 304)
+
     data = request.get_json()
     user = User.find_user(**data)
-
-    # TODO: ensure use is authenticated in session    
 
     if user is None:
         user = User(**data)
@@ -27,43 +30,47 @@ def register():
 
 @app.route('/api/login', methods=('POST',))
 def login():
+    user = User.find_user(id=session.get('user_id'))
+    if user:
+        app.logger.info(f'User is already logged in {user}')
+        return make_response('Already authenticated.', 304)
+
     data = request.get_json()
     user = User.authenticate(**data)
-
-    # TODO: ensure use is authenticated in session
 
     if user is None:
         app.logger.info(f'Failed to authenticate user')
         return make_response('Failed to authenticate.', 401)
     else:
-        session['authenticated'] = True
-        session['username'] = user.username
-        session['email'] = user.email
-
+        session['user_id'] = user.id
         app.logger.info(f'Authenticated user {user}')
         return make_response('Authenticated.', 200)
 
 @app.route('/api/logout', methods=('GET',))
 def logout():
-    authenticated = session.get('authenticated', False)
-    if authenticated:
-        user = User.find_user(**session)
+    user = User.find_user(id=session.get('user_id'))
+    if user:
         app.logger.info(f'Logging out user {user}')
-
-        session['authenticated'] = False
-        session.pop('username', None)
-        session.pop('email', None)
+        session.clear()
     else:
         app.logger.info(f'User is not logged in')
     
-    return 'Logged out.', 200
+    return make_response('Logged out.', 200)
 
-@app.route('/api/info', methods=('GET',))
-def info():
-    response = {
-        'username': session.get('username'),
-        'email': session.get('email'),
-        'authenticated': session.get('authenticated')
-    }
-
-    return make_response(jsonify(response), 200)
+@app.route('/api/user', methods=('GET',))
+def current_user():
+    user = User.find_user(id=session.get('user_id'))
+    if user:
+        app.logger.info(user)
+        return make_response(jsonify({
+            'user_id': user.id,
+            'username': user.username,
+            'email': user.email
+        }), 200)
+    else:
+        app.logger.info(f'User is not logged in')
+        return make_response(jsonify({
+            'user_id': None,
+            'username': None,
+            'email': None
+        }), 200)

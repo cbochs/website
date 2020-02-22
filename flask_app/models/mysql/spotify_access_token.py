@@ -32,5 +32,15 @@ class SpotifyAccessToken(db.Model):
         now = int((datetime.utcnow() + timedelta(minutes=5)).timestamp())
         return now > self.expires_at
 
+    def to_dict(self):
+        return dict(
+            access_token=self.access_token,
+            expires_in=self.expires_in,
+            refresh_token=self.refresh_token,
+            scope=self.scope,
+            token_type=self.token_type,
+            expires_at=self.expires_at,
+            expires_dt=self.expires_dt)
+
     def __repr__(self):
-        return f'<token: {self.access_token[:16]}, refresh_token: {self.refresh_token[:16]}, expires_at: {self.expires_at}, scopes: {len(self.scope)}'
+        return f'<token: {self.access_token[:16]}, refresh_token: {self.refresh_token[:16]}, token_type: {self.token_type}, expires_dt: {self.expires_dt}, scopes: {len(self.scope)}>'

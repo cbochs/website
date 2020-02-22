@@ -1,6 +1,8 @@
 from flask_app.spotify.api import SpotifyApi
 from flask_app.spotify.oauth import SpotifyOAuth
 from flask_app.spotify.credentials import SpotifyClientCredentials
+from flask_app.spotify.token_info import SpotifyTokenInfo
+from flask_app import app
 
 # What this has to do:
 # - Connect with the Spotify Web API using OAuth 2.0 flow
@@ -26,6 +28,12 @@ class Spotify(object):
     def request_access_token(self, code):
         return SpotifyOAuth.request_access_token(self.credentials, code)
 
+    
+    def token_info(self, access_token):
+        return SpotifyTokenInfo(**access_token.to_dict())
+
 
     def connect(self, token_info, scope=None):
-        return SpotifyApi(self, token_info)
+        if not isinstance(token_info, SpotifyTokenInfo):
+            token_info = self.token_info(token_info)
+        return SpotifyApi(self.credentials, token_info)

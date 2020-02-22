@@ -39,9 +39,9 @@ export default {
   },
   methods: {
     register() {
-      if (this.email !== null || this.email !== ''
-          && this.username !== null || this.username !== ''
-          && this.password !== null || this.password !== '') {
+      if (this.email === null || this.email === ''
+          && this.username === null || this.username === ''
+          && this.password === null || this.password === '') {
         console.log('empty fields when registering')
         return
       }
@@ -55,9 +55,9 @@ export default {
       this.password = ''
     },
     login() {
-      if (this.email !== null || this.email !== ''
-          && this.username !== null || this.username !== ''
-          && this.password !== null || this.password !== '') {
+      if (this.email === null || this.email === ''
+          && this.username === null || this.username === ''
+          && this.password === null || this.password === '') {
         console.log('empty fields when logging in')
         return
       }
@@ -83,15 +83,11 @@ export default {
     me() {
       spotifyMe()
         .then(response => {
-          console.log(response.data)
-          if (response.data.auth_url) {
+          console.log(response.status + ' ' + response.data)
+          if (response.data.auth_url)
             window.location = response.data.auth_url
-          }
         })
-        .catch(error => {
-          console.log(error.message)
-          console.log(error.response.data)
-        })
+        .catch(error => console.log(error.message))
     }
   }
 }

@@ -34,3 +34,7 @@ export function spotifyAuthorize(params) {
 export function spotifyMe() {
   return axios.get('/api/spotify/me')
 }
+
+export function spotifyPlaylists() {
+  return axios.get('/api/spotify/playlists')
+}

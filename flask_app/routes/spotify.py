@@ -10,7 +10,6 @@ from flask_app.spotify.oauth import SpotifyOAuth
 
 @app.route('/api/spotify/authorize', methods=('GET',))
 def spotify_authorize():
-    app.logger.info(f'session <user_id: {session.get("user_id")}>')
     spotify_user = SpotifyUser.find_user(id=session.get('spotify_id'))
     if spotify_user:
         app.logger.info(f'Spotify user already authorized in session {spotify_user}')
@@ -59,8 +58,22 @@ def spotify_authorize():
 
 
 @app.route('/api/spotify/me', methods=('GET',))
-def me():
-    app.logger.info(f'session {session.get("spotify_id")}')
+def spotify_me():
+    spotify_user = SpotifyUser.find_user(id=session.get('spotify_id'))
+
+    if not spotify_user:
+        return redirect('/api/spotify/authorize')
+
+    if not spotify_user.access_token:
+        return redirect('/api/spotify/authorize')
+
+    spotify_api = SpotifyApi(spotify_credentials, spotify_user.access_token)
+
+    return make_response(jsonify(spotify_api.me()), 200)
+
+
+@app.route('/api/spotify/playlists', methods=('GET',))
+def spotify_playlists():
     spotify_user = SpotifyUser.find_user(id=session.get('spotify_id'))
     
     if not spotify_user:
@@ -71,4 +84,4 @@ def me():
 
     spotify_api = SpotifyApi(spotify_credentials, spotify_user.access_token)
 
-    return make_response(jsonify(spotify_api.me()), 200)
+    return make_response(jsonify(spotify_api.my_playlists(follow_cursor=True)), 200)

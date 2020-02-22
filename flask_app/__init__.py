@@ -23,9 +23,9 @@ mysqldb = SQLAlchemy(app)
 migrate_mongodb = Migrate(app, mongodb)
 migrate_mysqldb = Migrate(app, mysqldb)
 
-from flask_app.spotify.spotify import Spotify
+from flask_app.spotify.credentials import SpotifyClientCredentials
 
-spotify = Spotify(app)
+spotify_credentials = SpotifyClientCredentials(app)
 
 from flask_app import models
 from flask_app import routes

@@ -8,17 +8,17 @@ class SpotifyUser(db.Model):
     type         = db.Column(db.String(80), nullable=False)
     uri          = db.Column(db.String(80), nullable=False)
     user_id      = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    access_token = db.relationship('SpotifyAccessToken', backref='spotify_user', lazy=True, uselist=False)
+    access_token = db.relationship('SpotifyToken', backref='spotify_user', lazy=True, uselist=False)
     
-    def __init__(self, me, user=None):
-        self.id           = me['id']
-        self.display_name = me['display_name']
-        self.type         = me['type']
-        self.uri          = me['uri']
+    def __init__(self, **kwargs):
+        self.id           = kwargs.get('id')
+        self.display_name = kwargs.get('display_name')
+        self.type         = kwargs.get('type')
+        self.uri          = kwargs.get('uri')
 
+        user = kwargs.get('user')
         if user:
-            self.user_id      = user.id
-
+            self.user_id = user.id
 
     def __repr__(self):
         return f'<id: {self.id}, display_name: {self.display_name}>'

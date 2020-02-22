@@ -105,8 +105,7 @@ class SpotifyApi(object):
 
     
     def _headers(self):
-        self.token_info = SpotifyOAuth.update_access_token(self.credentials, self.token_info)
-
+        self.token_info.refresh()
         token_type = self.token_info.token_type
         access_token = self.token_info.access_token
         headers = {

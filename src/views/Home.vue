@@ -83,7 +83,7 @@ export default {
     me() {
       spotifyMe()
         .then(response => {
-          console.log(response.status + ' ' + response.data)
+          console.log(response.data)
           if (response.data.auth_url)
             window.location = response.data.auth_url
         })

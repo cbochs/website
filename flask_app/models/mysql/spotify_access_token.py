@@ -14,9 +14,9 @@ class SpotifyAccessToken(db.Model):
     refresh_token = db.Column(db.String(255), nullable=False)
     scope         = db.Column(db.String(255), nullable=False) # TODO: handle scope storing better (array?)
     token_type    = db.Column(db.String(6),   nullable=False) # should always be 'Bearer'
-    spotify_id    = db.Column(db.String(80), db.ForeignKey('spotify_users.id'), nullable=False)
+    spotify_id    = db.Column(db.String(80), db.ForeignKey('spotify_users.id'), nullable=True)
 
-    def __init__(self, token_info, spotify_user):
+    def __init__(self, token_info, spotify_user=None):
         self.access_token  = token_info.access_token
         self.expires_at    = token_info.expires_at
         self.expires_dt    = token_info.expires_dt
@@ -24,7 +24,9 @@ class SpotifyAccessToken(db.Model):
         self.refresh_token = token_info.refresh_token
         self.scope         = token_info.scope
         self.token_type    = token_info.token_type
-        self.spotify_id    = spotify_user.id
+
+        if spotify_user:
+            self.spotify_id = spotify_user.id
 
     def expired(self):
         now = int((datetime.utcnow() + timedelta(minutes=5)).timestamp())

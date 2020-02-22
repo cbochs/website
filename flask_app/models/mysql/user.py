@@ -29,12 +29,15 @@ class User(db.Model):
 
     @classmethod
     def find_user(cls, **kwargs):
-        email    = kwargs.get('email')
-        username = kwargs.get('username')
+        id = kwargs.get('id')
+        if id:
+            return cls.query.get(id)
 
+        email = kwargs.get('email')
         if email:
             return cls.query.filter_by(email=email).first()
 
+        username = kwargs.get('username')
         if username:
             return cls.query.filter_by(username=username).first()
 

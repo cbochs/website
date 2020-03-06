@@ -7,7 +7,7 @@ from flask_app import app, mysqldb
 from flask_app.models.mysql.user import User
 
 
-@app.route('/api/register', methods=('POST',))
+@app.route('/register', methods=('POST',))
 def register():
     user = User.find_user(id=session.get('user_id'))
     if user:
@@ -29,7 +29,7 @@ def register():
         return make_response('User already exists.', 304)
 
 
-@app.route('/api/login', methods=('POST',))
+@app.route('/login', methods=('POST',))
 def login():
     user = User.find_user(id=session.get('user_id'))
     if user:
@@ -43,13 +43,13 @@ def login():
         app.logger.info(f'Failed to authenticate user')
         return make_response('Failed to authenticate.', 401)
     else:
-        session.pop('spotify_id')
+        session.clear()
         session['user_id'] = user.id
         app.logger.info(f'Authenticated user {user}')
         return make_response('Authenticated.', 200)
 
 
-@app.route('/api/logout', methods=('GET',))
+@app.route('/logout', methods=('GET',))
 def logout():
     user = User.find_user(id=session.get('user_id'))
     if not user:
@@ -62,7 +62,7 @@ def logout():
 
 
 
-@app.route('/api/user', methods=('GET',))
+@app.route('/user', methods=('GET',))
 def current_user():
     user = User.find_user(id=session.get('user_id'))
     if not user:

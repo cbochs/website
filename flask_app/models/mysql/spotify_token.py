@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
 
 from flask_app import mysqldb as db
-from flask_app import spotify_credentials
-from flask_app.spotify.oauth import SpotifyOAuth
+from flask_app.spotify.token import SpotifyToken, SpotifyTokenException
 
 # https://developer.spotify.com/documentation/general/guides/authorization-guide/
 class SpotifyToken(db.Model):
@@ -19,45 +18,39 @@ class SpotifyToken(db.Model):
     spotify_id    = db.Column(db.String(80), db.ForeignKey('spotify_users.id'), nullable=True)
 
     def __init__(self, **kwargs):
-        self._update(**kwargs)
+        self.token = SpotifyToken(**kwargs)
 
-    def expired(self):
-        now = int((datetime.utcnow() + timedelta(minutes=5)).timestamp())
-        return now > self.expires_at
-
-    def refresh(self):
-        if not self.expired():
-            return
-
-        token_info = SpotifyOAuth.refresh_access_token(spotify_credentials, self)
-        self._update(**token_info, commit=True)
-
-    def _update(self, **kwargs):
-        self.access_token  = kwargs.get('access_token')
-        self.expires_at    = kwargs.get('expires_at')
-        self.expires_dt    = kwargs.get('expires_dt')
-        self.expires_in    = kwargs.get('expires_in')
-        self.scope         = kwargs.get('scope')
-        self.token_type    = kwargs.get('token_type')
-
-        # might not get a new refresh token. If not, keep the old one
-        self.refresh_token = kwargs.get('refresh_token', self.refresh_token)
-
-        if not self.expires_at or not self.expires_dt:
-            self._add_expiry_time()
+        self.access_token  = self.token.access_token
+        self.expires_at    = self.token.refresh_token
+        self.expires_dt    = self.token.expires_at
+        self.expires_in    = self.token.expires_dt
+        self.refresh_token = self.token.refresh_token
+        self.scope         = self.token.expires_in
+        self.token_type    = self.token.token_type
 
         spotify_user = kwargs.get('spotify_user')
         if spotify_user:
             self.spotify_id = spotify_user.id
 
-        commit = kwargs.get('commit', False)
-        if commit:
+    def refresh(self, credentials):
+        try:
+            refreshed = self.token.refresh(credentials)
+        except SpotifyTokenException as e:
+            # TODO: remove token from db and set spotify_user's api_token to none
+            return
+
+        if refreshed:
+            self._update_token()
             db.session.commit()
 
-    def _add_expiry_time(self):
-        dt = datetime.utcnow() + timedelta(seconds=self.expires_in)
-        self.expires_dt = dt
-        self.expires_at = int(dt.timestamp())
+    def _update_token(self):
+        self.access_token  = self.token.access_token
+        self.expires_at    = self.token.refresh_token
+        self.expires_dt    = self.token.expires_at
+        self.expires_in    = self.token.expires_dt
+        self.refresh_token = self.token.refresh_token
+        self.scope         = self.token.expires_in
+        self.token_type    = self.token.token_type
         
     def __repr__(self):
         return f'<token: {self.access_token[:16]}, refresh_token: {self.refresh_token[:16]}, token_type: {self.token_type}, expires_dt: {self.expires_dt}, scopes: {len(self.scope)}>'

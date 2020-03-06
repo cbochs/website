@@ -8,7 +8,7 @@ class SpotifyUser(db.Model):
     type         = db.Column(db.String(80), nullable=False)
     uri          = db.Column(db.String(80), nullable=False)
     user_id      = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    access_token = db.relationship('SpotifyToken', backref='spotify_user', lazy=True, uselist=False)
+    api_token    = db.relationship('SpotifyToken', backref='spotify_user', lazy=True, uselist=False)
     
     def __init__(self, **kwargs):
         self.id           = kwargs.get('id')
@@ -21,7 +21,7 @@ class SpotifyUser(db.Model):
             self.user_id = user.id
 
     def __repr__(self):
-        return f'<id: {self.id}, display_name: {self.display_name}>'
+        return f'<display_name: {self.display_name}, id: {self.id}>'
 
     @classmethod
     def find_user(cls, **kwargs):

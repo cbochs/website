@@ -8,7 +8,7 @@ export function getCurrentUser() {
 }
 
 export function registerUser(email, username, password) {
-  return axios.post('/api/register', {
+  return axios.post('/register', {
     email,
     username,
     password
@@ -16,7 +16,7 @@ export function registerUser(email, username, password) {
 }
 
 export function loginUser(email, username, password) {
-  return axios.post('/api/login', {
+  return axios.post('/login', {
     email,
     username,
     password
@@ -24,17 +24,17 @@ export function loginUser(email, username, password) {
 }
 
 export function logoutUser() {
-  return axios.get('/api/logout')
+  return axios.get('/logout')
 }
 
 export function spotifyAuthorize(params) {
-  return axios.get('/api/spotify/authorize', {params})
+  return axios.get('/spotify/authorize', {params})
 }
 
 export function spotifyMe() {
-  return axios.get('/api/spotify/me')
+  return axios.get('/spotify/me')
 }
 
 export function spotifyPlaylists() {
-  return axios.get('/api/spotify/playlists')
+  return axios.get('/spotify/playlists')
 }

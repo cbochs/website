@@ -4,11 +4,12 @@ from flask_app import app, spotify_credentials, mysqldb
 from flask_app.models.mysql.spotify_token import SpotifyToken
 from flask_app.models.mysql.spotify_user import SpotifyUser
 from flask_app.models.mysql.user import User
-from flask_app.spotify.api import SpotifyApi
+from flask_app.spotify.client import SpotifyClient
 from flask_app.spotify.oauth import SpotifyOAuth
 
-
-@app.route('/api/spotify/authorize', methods=('GET',))
+# TODO: if the spotify user is in the db, but doesn't have a token we should 
+#       still re-authorize the user
+@app.route('/spotify/authorize', methods=('GET',))
 def spotify_authorize():
     spotify_user = SpotifyUser.find_user(id=session.get('spotify_id'))
     if spotify_user:
@@ -31,8 +32,8 @@ def spotify_authorize():
         token_info = SpotifyOAuth.request_access_token(spotify_credentials, code)
         spotify_token = SpotifyToken(**token_info)
 
-        spotify_api = SpotifyApi(spotify_credentials, spotify_token)
-        me = spotify_api.me()
+        spotify_client = SpotifyClient(spotify_credentials, spotify_token)
+        me = spotify_client.me()
 
         spotify_user = SpotifyUser.find_user(id=me['id'])
         if spotify_user:
@@ -57,19 +58,21 @@ def spotify_authorize():
         return make_response(jsonify({'auth_url': authorization_url}), 200)
 
 
-@app.route('/api/spotify/me', methods=('GET',))
+@app.route('/spotify/me', methods=('GET',))
 def spotify_me():
     spotify_user = SpotifyUser.find_user(id=session.get('spotify_id'))
 
     if not spotify_user:
         return redirect('/api/spotify/authorize')
 
-    if not spotify_user.access_token:
+    spotify_token = spotify_user.api_token
+
+    if not spotify_token:
         return redirect('/api/spotify/authorize')
 
-    spotify_api = SpotifyApi(spotify_credentials, spotify_user.access_token)
+    spotify_client = SpotifyClient(spotify_credentials, spotify_token)
 
-    return make_response(jsonify(spotify_api.me()), 200)
+    return make_response(jsonify(spotify_client.me()), 200)
 
 
 @app.route('/api/spotify/playlists', methods=('GET',))
@@ -79,9 +82,11 @@ def spotify_playlists():
     if not spotify_user:
         return redirect('/api/spotify/authorize')
 
-    if not spotify_user.access_token:
+    spotify_token = spotify_user.api_token
+
+    if not spotify_token:
         return redirect('/api/spotify/authorize')
 
-    spotify_api = SpotifyApi(spotify_credentials, spotify_user.access_token)
+    spotify_client = SpotifyClient(spotify_credentials, spotify_token)
 
-    return make_response(jsonify(spotify_api.my_playlists(follow_cursor=True)), 200)
+    return make_response(jsonify(spotify_client.my_playlists(follow_cursor=False)), 200)

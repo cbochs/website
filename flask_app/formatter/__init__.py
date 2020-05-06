@@ -1,5 +1,6 @@
 from .album import *
 from .artist import *
+from .custom import *
 from .datetime import *
 from .play_history import *
 from .playlist import *

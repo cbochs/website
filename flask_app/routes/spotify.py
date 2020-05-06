@@ -6,8 +6,25 @@ from flask_app.models.mysql.spotify_user import SpotifyUser
 from flask_app.models.mysql.user import User
 from flask_app.spotify.client import SpotifyClient
 from flask_app.spotify.oauth import SpotifyOAuth
+from flask_app.scheduler.recently_played import watch_recently_played
 
-# TODO: if the spotify user is in the db, but doesn't have a token we should 
+def requires_spotify_authorization(route):
+    def wrapper(*args, **kwargs):
+        spotify_user = SpotifyUser.find_user(id=session.get('spotify_id'))
+
+        if not spotify_user:
+            return redirect('/api/spotify/authorize')
+
+        spotify_token = spotify_user.api_token
+
+        if not spotify_token:
+            return redirect('/api/spotify/authorize')
+
+        route(*args, **kwargs)
+
+    return wrapper
+
+# TODO: if the spotify user is in the db, but doesn't have a token we should
 #       still re-authorize the user
 @app.route('/spotify/authorize', methods=('GET',))
 def spotify_authorize():
@@ -21,7 +38,7 @@ def spotify_authorize():
         session['spotify_id'] = user.spotify_user.id
         app.logger.info(f'User is already authorized with valid spotify user {user}')
         return make_response('Already authorized.', 200)
-    
+
     error = request.values.get('error')
     code = request.values.get('code')
 
@@ -58,35 +75,26 @@ def spotify_authorize():
         return make_response(jsonify({'auth_url': authorization_url}), 200)
 
 
+@requires_spotify_authorization
 @app.route('/spotify/me', methods=('GET',))
 def spotify_me():
     spotify_user = SpotifyUser.find_user(id=session.get('spotify_id'))
-
-    if not spotify_user:
-        return redirect('/api/spotify/authorize')
-
     spotify_token = spotify_user.api_token
-
-    if not spotify_token:
-        return redirect('/api/spotify/authorize')
-
     spotify_client = SpotifyClient(spotify_credentials, spotify_token)
 
     return make_response(jsonify(spotify_client.me()), 200)
 
 
-@app.route('/api/spotify/playlists', methods=('GET',))
-def spotify_playlists():
-    spotify_user = SpotifyUser.find_user(id=session.get('spotify_id'))
-    
-    if not spotify_user:
-        return redirect('/api/spotify/authorize')
+@requires_spotify_authorization
+@app.route('/spotify/watch/playlist/<playlist_id>', methods=('POST',))
+def spotify_watch_playlist(playlist_id):
+    return make_response(jsonify({'not_implemented': True}), 201)
 
-    spotify_token = spotify_user.api_token
 
-    if not spotify_token:
-        return redirect('/api/spotify/authorize')
+@requires_spotify_authorization
+@app.route('/spotify/watch/recently_played', methods=('POST',))
+def spotify_watch_recently_played():
+    spotify_id = session.get('spotify_id')
+    job = watch_recently_played(spotify_id)
 
-    spotify_client = SpotifyClient(spotify_credentials, spotify_token)
-
-    return make_response(jsonify(spotify_client.my_playlists(follow_cursor=False)), 200)
+    return make_response(jsonify({'job_id': job.id}), 201)

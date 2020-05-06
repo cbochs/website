@@ -1,6 +1,8 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
+import Login from '../views/Login.vue'
+import Register from '../views/Register.vue'
 import { spotifyAuthorize } from '@/api'
 
 Vue.use(VueRouter)
@@ -12,12 +14,22 @@ const routes = [
     component: Home
   },
   {
+    path: '/login',
+    name: 'Login',
+    component: Login
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register
+  },
+  {
     path: '/lazy',
     name: 'Lazy',
     component: () => import('../views/Lazy.vue')
   },
   {
-    path: '/authorized',
+    path: '/authorize',
     name: 'SpotifyAuth',
     beforeEnter(to, from, next) {
       spotifyAuthorize(to.query)

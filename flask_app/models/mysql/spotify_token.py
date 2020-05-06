@@ -19,14 +19,7 @@ class SpotifyToken(db.Model):
 
     def __init__(self, **kwargs):
         self.token = SpotifyToken(**kwargs)
-
-        self.access_token  = self.token.access_token
-        self.expires_at    = self.token.refresh_token
-        self.expires_dt    = self.token.expires_at
-        self.expires_in    = self.token.expires_dt
-        self.refresh_token = self.token.refresh_token
-        self.scope         = self.token.expires_in
-        self.token_type    = self.token.token_type
+        self._update_token()
 
         spotify_user = kwargs.get('spotify_user')
         if spotify_user:
@@ -51,6 +44,6 @@ class SpotifyToken(db.Model):
         self.refresh_token = self.token.refresh_token
         self.scope         = self.token.expires_in
         self.token_type    = self.token.token_type
-        
+
     def __repr__(self):
-        return f'<token: {self.access_token[:16]}, refresh_token: {self.refresh_token[:16]}, token_type: {self.token_type}, expires_dt: {self.expires_dt}, scopes: {len(self.scope)}>'
+        return f'<type: spotify, token: {self.access_token[:16]}, refresh_token: {self.refresh_token[:16]}, expires_dt: {self.expires_dt}, scopes: {len(self.scope)}>'

@@ -1,5 +1,3 @@
-
-
 def format_basic_user(result):
     user = {
         'id': result['id'],

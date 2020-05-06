@@ -21,13 +21,18 @@ lookup = {
 
 
 def to_datetime(date_string, precision):
+    if isinstance(date_string, datetime):
+        return date_string
+
     if precision not in lookup or date_string == '0000':
-        print(f'ERROR -- NO DATETIME FOUND FOR {date_string}')
         return None
 
     return datetime.strptime(date_string, lookup[precision])
 
 
 def from_datetime(date_obj, precision):
+    if isinstance(date_obj, str):
+        return date_obj
+
     datetime_format = lookup[precision] if precision in lookup else precision
     return datetime.strftime(date_obj, datetime_format)

@@ -1,19 +1,6 @@
-from flask_app.formatter.datetime import to_datetime, from_datetime
-from flask_app.formatter.track import format_simple_track
-from flask_app.formatter.user import format_basic_user, format_simple_user
-from flask_app.formatter.util import format_all
-
-from datetime import datetime
-
-
-def format_playlist_track(result):
-    playlist_track = {
-        'added_at': to_datetime(result['added_at'], 'second'),
-        'added_by': format_basic_user(result['added_by']),
-        'track': format_simple_track(result['track']),
-        'type': 'playlist_track'}
-    
-    return playlist_track
+from .track import format_playlist_track
+from .user import format_simple_user
+from .util import format_all
 
 
 def format_simple_playlist(result):
@@ -21,7 +8,7 @@ def format_simple_playlist(result):
         'name': result['name'],
         'id': result['id'],
         'type': result['type']}
-    
+
     return playlist
 
 

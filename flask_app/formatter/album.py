@@ -1,6 +1,7 @@
-from flask_app.formatter.artist import format_simple_artist
-from flask_app.formatter.util import format_all
-from flask_app.formatter.datetime import to_datetime
+from .artist import format_simple_artist
+from .util import format_all
+from .datetime import to_datetime
+
 
 def format_simple_album(result):
     album = {

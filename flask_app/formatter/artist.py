@@ -1,5 +1,3 @@
-
-
 def format_simple_artist(result):
     artist = {
         'name': result['name'],

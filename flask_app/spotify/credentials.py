@@ -21,38 +21,38 @@ class SpotifyClientCredentials(object):
             self.init_app(app)
 
         if self.client_id is None:
-            raise SpotifyCredentialsException('CLIENT_ID was not set / properly')
+            raise SpotifyCredentialsException('SPOTIFY_CLIENT_ID was not set properly')
 
         if self.client_secret is None:
-            raise SpotifyCredentialsException('CLIENT_SECRET was not set / properly')
+            raise SpotifyCredentialsException('SPOTIFY_CLIENT_SECRET was not set properly')
 
         if self.redirect_uri is None:
-            raise SpotifyCredentialsException('REDIRECT_URI was not set / properly')
+            raise SpotifyCredentialsException('SPOTIFY_REDIRECT_URI was not set properly')
 
 
     def init_env(self):
         if self.client_id is None:
-            self.client_id = os.getenv('CLIENT_ID')
+            self.client_id = os.getenv('SPOTIFY_CLIENT_ID')
         
         if self.client_secret is None:
-            self.client_secret = os.getenv('CLIENT_SECRET')
+            self.client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
 
         if self.redirect_uri is None:
-            self.redirect_uri = os.getenv('REDIRECT_URI')
+            self.redirect_uri = os.getenv('SPOTIFY_REDIRECT_URI')
 
         if self.default_scope is None:
-            self.default_scope = os.getenv('DEFAULT_SCOPE')
+            self.default_scope = os.getenv('SPOTIFY_DEFAULT_SCOPE')
 
 
     def init_app(self, app):
         if self.client_id is None:
-            self.client_id = app.config.get('CLIENT_ID')
+            self.client_id = app.config.get('SPOTIFY_CLIENT_ID')
         
         if self.client_secret is None:
-            self.client_secret = app.config.get('CLIENT_SECRET')
+            self.client_secret = app.config.get('SPOTIFY_CLIENT_SECRET')
 
         if self.redirect_uri is None:
-            self.redirect_uri = app.config.get('REDIRECT_URI')
+            self.redirect_uri = app.config.get('SPOTIFY_REDIRECT_URI')
 
         if self.default_scope is None:
-            self.default_scope = app.config.get('DEFAULT_SCOPE')
+            self.default_scope = app.config.get('SPOTIFY_DEFAULT_SCOPE')

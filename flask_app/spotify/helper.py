@@ -1,24 +1,21 @@
-
+import functools
 
 def handle_cursor(cursor_loc=None, limit=0):
     """
-    A decorator method to follow cursor-wrapped objects in Spotify's API calls.
-    TODO: ...
+    A decorator method to follow cursor-wrapped objects from Spotify's API.
 
-    Arguments:
-        cursor_loc (string):
-        limit (int): 
-
-    Returns:
-        method: the decorated api call
+    :param str cursor_loc:
+    :param int limit:
+    :rtype func
     """
     def decorator(api_call):
+        @functools.wraps(api_call)
         def wrapper(self, *args, **kwargs):
             follow_cursor = kwargs.pop('follow_cursor', False)
             if follow_cursor:
                 if limit > 0:
                     kwargs.update(limit=limit)
-                
+
                 results = api_call(self, *args, **kwargs)
                 is_list = isinstance(results, list)
                 results = results if is_list else [results]
@@ -34,12 +31,12 @@ def handle_cursor(cursor_loc=None, limit=0):
                     while cursor['next']:
                         cursor = self._next(cursor)
                         items.extend(cursor['items'])
-                    
+
                     if cursor_loc is not None:
                         result[cursor_loc] = items
                     else:
                         result = items
-                    
+
                     final_result.append(result)
 
                 # Convert back to hash if need be
@@ -52,16 +49,13 @@ def handle_cursor(cursor_loc=None, limit=0):
 
 def handle_bulk(limit):
     """
-    A decorator method to handle bult requests to Spotify's API.
-    TODO: ...
+    A decorator method to handle bulk requests to Spotify's API.
 
-    Arguments:
-        limit (int):
-
-    Returns:
-        method: the decorated api call
+    :param int limit
+    :rtype func
     """
     def decorator(api_call):
+        @functools.wraps(api_call)
         def wrapper(self, *args, **kwargs):
             call_name = api_call.__name__
 

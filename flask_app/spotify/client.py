@@ -2,8 +2,12 @@ import os
 
 import requests
 
-from .helper import handle_bulk, handle_cursor
+from .helper import handle_bulk, handle_cursor, retry
 from .oauth import SpotifyOAuth
+
+
+# https://developer.spotify.com/documentation/web-api/reference-beta/
+SPOTIFY_API_URI = 'https://api.spotify.com/v1/'
 
 
 class SpotifyClientException(BaseException):
@@ -11,9 +15,6 @@ class SpotifyClientException(BaseException):
 
 
 class SpotifyClient(object):
-
-    # https://developer.spotify.com/documentation/web-api/reference-beta/
-    SPOTIFY_API_URI = 'https://api.spotify.com/v1/'
 
     def __init__(self, credentials, token):
         self.credentials = credentials
@@ -132,11 +133,12 @@ class SpotifyClient(object):
         return self._get(result['next']) if result['next'] else None
 
 
+    @retry()
     def _get(self, endpoint, **kwargs):
-        if self.SPOTIFY_API_URI in endpoint:
+        if SPOTIFY_API_URI in endpoint:
             url = endpoint
         else:
-            url = os.path.join(self.SPOTIFY_API_URI, endpoint)
+            url = os.path.join(SPOTIFY_API_URI, endpoint)
 
         headers = self._headers()
 
@@ -148,11 +150,12 @@ class SpotifyClient(object):
         return response.json()
 
 
+    @retry()
     def _post(self, endpoint, **kwargs):
-        if self.SPOTIFY_API_URI in endpoint:
+        if SPOTIFY_API_URI in endpoint:
             url = endpoint
         else:
-            url = os.path.join(self.SPOTIFY_API_URI, endpoint)
+            url = os.path.join(SPOTIFY_API_URI, endpoint)
 
         headers = self._headers()
 

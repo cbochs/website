@@ -1,4 +1,22 @@
 import functools
+from time import sleep
+
+def retry(max_attempts=10, attempt_delay=1):
+    def decorator(req):
+        @functools.wraps(req)
+        def wrapper(*args, **kwargs):
+            attempt = 0
+            while attempt < max_attempts:
+                try:
+                    attempt = attempt + 1
+                    result = req(*args, **kwargs)
+                except:
+                    sleep(attempt_delay)
+                    continue
+                return result
+        return wrapper
+    return decorator
+
 
 def handle_cursor(cursor_loc=None, limit=0):
     """

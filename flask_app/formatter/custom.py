@@ -1,29 +1,19 @@
-from .track import format_playlist_track
-from .user import format_simple_user
-from .util import format_all
 from .datetime import to_datetime
+from .playlist import format_playlist
 
-def format_custom_playlist(result, snapshots, last_checked, last_updated):
+
+def format_watched_playlist(result, snapshots, last_checked, last_updated):
     playlist = {
-        'collaborative': result['collaborative'],
-        'description': result['description'],
-        'followers': result['followers']['total'],
-        'name': result['name'],
-        'owner': format_simple_user(result['owner']),
-        'public': result['public'],
+        'playlist': format_playlist(result),
         'snapshots': snapshots,
-        'snapshot_id': result['snapshot_id'],
         'last_checked': to_datetime(last_checked, 'second'),
         'last_updated': to_datetime(last_updated, 'second'),
-        'tracks': format_all(result['tracks'], format_playlist_track),
-        'uri': result['uri'],
-        'id': result['id'],
-        'type': result['type']}
+        'type': 'watched_playlist'}
 
     return playlist
 
 
-def format_custom_snapshot(result, old_fields, new_fields):
+def format_snapshot(result, old_fields, new_fields):
     snapshot = {
         'changed_at': to_datetime(result['changed_at'], 'second'),
         'tracks': result['tracks'],
@@ -32,6 +22,7 @@ def format_custom_snapshot(result, old_fields, new_fields):
         'next_snapshot': result['next_snapshot'],
         'old_fields': old_fields,
         'new_fields': new_fields,
-        'change': result['change']}
+        'change': result['change'],
+        'type': 'snapshot'}
 
     return snapshot

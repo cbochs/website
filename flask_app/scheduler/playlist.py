@@ -3,8 +3,7 @@ from datetime import datetime
 
 import flask_app.utils.myers as myers
 from flask_app import mongodb, scheduler, spotify_credentials
-from flask_app.formatter.custom import (format_custom_playlist,
-                                        format_custom_snapshot)
+from flask_app.formatter.custom import format_snapshot, format_watched_playlist
 from flask_app.models.mysql.spotify_user import SpotifyUser
 from flask_app.spotify.client import SpotifyClient
 
@@ -45,7 +44,7 @@ def _create_snapshot(old_playlist, new_playlist):
         'changed_at': datetime.utcnow(),
         'tracks': _create_patch(old_playlist, new_playlist),
         'snapshot_id': new_playlist['snapshot_id'],
-        'prev_snapshot': old_playlist['last_snapshot'],
+        'prev_snapshot': None, # old_playlist['last_snapshot'],
         'next_snapshot': None,
         'change': int(b64decode(new_playlist['snapshot_id'])
                      .decode('ascii')
@@ -61,7 +60,7 @@ def _create_snapshot(old_playlist, new_playlist):
         for ef in ['collaborative', 'description', 'name', 'public']
         if old_playlist[ef] != new_playlist[ef]}
 
-    return format_custom_snapshot(snapshot, old_fields, new_fields)
+    return format_snapshot(snapshot, old_fields, new_fields)
 
 
 def _create_patch(old_playlist, new_playlist):

@@ -3,6 +3,8 @@ from urllib.parse import urlencode
 
 import requests
 
+from .helper import retry
+
 
 # https://developer.spotify.com/documentation/general/guides/authorization-guide/
 SPOTIFY_OAUTH_AUTH_URI = 'https://accounts.spotify.com/authorize'
@@ -27,6 +29,7 @@ class SpotifyOAuth(object):
 
 
     @staticmethod
+    @retry()
     def request_access_token(credentials, code):
         data = {
             'client_id': credentials.client_id,
@@ -41,12 +44,13 @@ class SpotifyOAuth(object):
         if response.status_code == 200:
             token_info = response.json()
         else:
-            token_info = None
+            raise SpotifyOAuthException(response.reason)
 
         return token_info
 
 
     @staticmethod
+    @retry()
     def refresh_access_token(credentials, token_info):
         data = {
             'client_id': credentials.client_id,

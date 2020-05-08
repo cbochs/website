@@ -26,3 +26,14 @@ def format_snapshot(result, old_fields, new_fields):
         'type': 'snapshot'}
 
     return snapshot
+
+
+def format_patch_step(px, py, nx, ny, track):
+    step = {
+        'px': px,
+        'py': py,
+        'nx': nx,
+        'ny': ny,
+        'tr': track}
+
+    return step

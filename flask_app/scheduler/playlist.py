@@ -2,13 +2,15 @@ from base64 import b64decode
 from datetime import datetime
 
 import flask_app.utils.myers as myers
-from flask_app import mongodb, scheduler, spotify_credentials
-from flask_app.formatter.custom import format_snapshot, format_watched_playlist
+from flask_app import app, mongodb, scheduler, spotify_credentials
+from flask_app.formatter.custom import (format_patch_step, format_snapshot,
+                                        format_watched_playlist)
+from flask_app.formatter.playlist import format_playlist
 from flask_app.models.mysql.spotify_user import SpotifyUser
 from flask_app.spotify.client import SpotifyClient
 
 
-def watch_playlist(playlist_id):
+def watch_playlist(spotify_id, playlist_id):
     job_id = f'playlist_{playlist_id}'
     job = scheduler.get_job(job_id)
 
@@ -16,7 +18,7 @@ def watch_playlist(playlist_id):
         scheduler.add_job(
             job_id,
             _update_playlist,
-            args=[playlist_id],
+            args=[spotify_id, playlist_id],
             cron='')
 
 
@@ -25,26 +27,78 @@ def unwatch_playlist(playlist_id):
     scheduler.remove_job(job_id)
 
 
-def _update_playlist(playlist_id):
-    spotify_user = SpotifyClient.find_user(id=spotify_id)
+def _update_playlist(spotify_id, playlist_id):
+    spotify_user = SpotifyUser.find_user(id=spotify_id)
     spotify_token = spotify_user.api_token
     spotify_client = SpotifyClient(spotify_credentials, spotify_token)
 
-    new_snapshot_id = spotify_client.playlist(playlist_id, fields='snapshot_id')
-    old_snapshot_id = '' # TODO
+    playlist_collection = mongodb.db.playlists
+    snapshot_collection = mongodb.db.snapshots
 
-    if new_snapshot_id != old_snapshot_id:
-        new_playlist = spotify_client.playlist(playlist_id, follow_cursor=True)
-        old_playlist = '' # TODO
-        snapshot = _create_snapshot(old_playlist, new_playlist)
+    playlist = playlist_collection.find_one({'playlist.id': playlist_id})
+
+    if playlist is None:
+        timestamp = datetime.utcnow()
+        new_playlist = format_watched_playlist(
+            spotify_client.playlist(playlist_id, follow_cursor=True),
+            [], timestamp, timestamp)
+
+        playlist_collection.insert_one(new_playlist)
+        app.logger.info(f'Playlist added. playlist_id={playlist_id}')
+        return
+
+    old_snapshot_id = playlist['playlist']['snapshot_id']
+    new_snapshot_id = spotify_client.playlist(playlist_id, fields='snapshot_id')['snapshot_id']
+
+    timestamp = datetime.utcnow()
+
+    if new_snapshot_id == old_snapshot_id:
+        playlist_collection.update_one(
+            {'playlist.id': playlist_id},
+            {'$set': {'last_checked': timestamp}})
+        app.logger.info(f'Playlist unchanged. playlist_id={playlist_id}')
+        return
+
+    new_playlist = format_playlist(spotify_client.playlist(playlist_id, follow_cursor=True))
+    new_snapshot = _create_snapshot(playlist['playlist'], new_playlist, timestamp)
+
+    # Apparently Discover Weekly updates A LOT, even without changes. Throw away
+    # snapshots when they don't contain any deltas
+    if len(new_snapshot['tracks']) == 0 and len(new_snapshot['new_fields']) == 0:
+        playlist_collection.update_one(
+            {'playlist.id': playlist_id},
+            {'$set': {'last_checked': timestamp}})
+        app.logger.info(f'Playlist updated without changes. playlist_id={playlist_id}')
+        return
+
+    old_snapshot = snapshot_collection.find_one({'snapshot_id': old_snapshot_id})
+    if old_snapshot is not None:
+        new_snapshot['prev_snapshot'] = old_snapshot['snapshot_id']
+
+        snapshot_collection.update_one(
+            {'snapshot_id': old_snapshot['snapshot_id']},
+            {'$set': {'next_snapshot': new_snapshot['snapshot_id']}})
+        app.logger.info(f"Snapshot updated. snapshot_id={old_snapshot['snapshot_id']}")
+
+    snapshot_collection.insert_one(new_snapshot)
+    app.logger.info(f"Snapshot added. snapshot_id={new_snapshot['snapshot_id']}")
+
+    playlist_collection.update_one(
+        {'playlist.id': playlist_id},
+        {'$set': {
+            'playlist': new_playlist,
+            'snapshots': playlist['snapshots'] + [new_snapshot['snapshot_id']],
+            'last_checked': timestamp,
+            'last_updated': timestamp}})
+    app.logger.info(f"Playlist updated. playlist_id={playlist_id}, snapshot_id={new_snapshot['snapshot_id']}")
 
 
-def _create_snapshot(old_playlist, new_playlist):
+def _create_snapshot(old_playlist, new_playlist, timestamp=None):
     snapshot = {
-        'changed_at': datetime.utcnow(),
+        'changed_at': timestamp or datetime.utcnow(),
         'tracks': _create_patch(old_playlist, new_playlist),
         'snapshot_id': new_playlist['snapshot_id'],
-        'prev_snapshot': None, # old_playlist['last_snapshot'],
+        'prev_snapshot': None,
         'next_snapshot': None,
         'change': int(b64decode(new_playlist['snapshot_id'])
                      .decode('ascii')
@@ -73,9 +127,9 @@ def _create_patch(old_playlist, new_playlist):
 
     for px, py, nx, ny in steps:
         if px == nx: # insert new track
-            patch.append((px, py, nx, ny, new_playlist['tracks'][py]))
+            patch.append(format_patch_step(px, py, nx, ny, new_playlist['tracks'][py]))
         elif py == ny: # remove old track
-            patch.append((px, py, nx, ny, old_playlist['tracks'][px]))
+            patch.append(format_patch_step(px, py, nx, ny, old_playlist['tracks'][px]))
 
     return patch
 
@@ -88,7 +142,10 @@ def _apply_snapshot(old_playlist, snapshot):
 
     while x < len(old_playlist['tracks']) or i < len(patch):
         if i < len(patch):
-            px, py, nx, ny, nt = patch[i]
+            step = patch[i]
+            px, py = step['px'], step['py']
+            nx, ny = step['nx'], step['ny']
+            nt = step['tr']
         else:
             px, py, nx, ny, nt = -1, -1, -1, -1, None
 

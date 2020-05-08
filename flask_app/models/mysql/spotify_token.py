@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 
 from flask_app import mysqldb as db
-from flask_app.spotify.token import SpotifyToken, SpotifyTokenException
+from flask_app.spotify.token import SpotifyToken as BaseSpotifyToken
+from flask_app.spotify.token import SpotifyTokenException
 
 # https://developer.spotify.com/documentation/general/guides/authorization-guide/
 class SpotifyToken(db.Model):
@@ -18,8 +19,8 @@ class SpotifyToken(db.Model):
     spotify_id    = db.Column(db.String(80), db.ForeignKey('spotify_users.id'), nullable=True)
 
     def __init__(self, **kwargs):
-        self.token = SpotifyToken(**kwargs)
-        self._update_token()
+        self._token = BaseSpotifyToken(**kwargs)
+        self._update()
 
         spotify_user = kwargs.get('spotify_user')
         if spotify_user:
@@ -33,17 +34,23 @@ class SpotifyToken(db.Model):
             return
 
         if refreshed:
-            self._update_token()
+            self._update()
             db.session.commit()
 
-    def _update_token(self):
+    @property
+    def token(self):
+        if not hasattr(self, '_token'):
+            self._token = BaseSpotifyToken(**self.__dict__)
+        return self._token
+
+    def _update(self):
         self.access_token  = self.token.access_token
-        self.expires_at    = self.token.refresh_token
-        self.expires_dt    = self.token.expires_at
-        self.expires_in    = self.token.expires_dt
+        self.expires_at    = self.token.expires_at
+        self.expires_dt    = self.token.expires_dt
+        self.expires_in    = self.token.expires_in
         self.refresh_token = self.token.refresh_token
-        self.scope         = self.token.expires_in
+        self.scope         = self.token.scope
         self.token_type    = self.token.token_type
 
     def __repr__(self):
-        return f'<type: spotify, token: {self.access_token[:16]}, refresh_token: {self.refresh_token[:16]}, expires_dt: {self.expires_dt}, scopes: {len(self.scope)}>'
+        return f'<type: spotify, access_token: {self.access_token[:16]}, refresh_token: {self.refresh_token[:16]}, expires_dt: {self.expires_dt}, #scopes: {len(self.scope)}>'

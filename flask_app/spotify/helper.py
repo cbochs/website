@@ -10,7 +10,8 @@ def retry(max_attempts=10, attempt_delay=1):
                 try:
                     attempt = attempt + 1
                     result = req(*args, **kwargs)
-                except:
+                except BaseException as e:
+                    print(e)
                     sleep(attempt_delay)
                     continue
                 return result

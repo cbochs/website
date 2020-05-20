@@ -2,9 +2,8 @@ from base64 import b64decode
 from datetime import datetime
 
 import flask_app.utils.myers as myers
-from flask_app import app, mongodb, scheduler, spotify_credentials
-from flask_app.formatter.custom import (format_patch_step, format_snapshot,
-                                        format_watched_playlist)
+from flask_app import app, mongodb, my_scheduler, spotify_credentials
+from flask_app.formatter.custom import *
 from flask_app.formatter.playlist import format_playlist
 from flask_app.models.mysql.spotify_user import SpotifyUser
 from flask_app.spotify.client import SpotifyClient
@@ -12,22 +11,28 @@ from flask_app.spotify.client import SpotifyClient
 
 def watch_playlist(spotify_id, playlist_id):
     job_id = f'playlist_{playlist_id}'
-    job = scheduler.get_job(job_id)
+    job = my_scheduler.get_job(job_id)
 
     if job is None:
-        scheduler.add_job(
+        job = my_scheduler.add_job(
             job_id,
-            _update_playlist,
+            update_playlist,
             args=[spotify_id, playlist_id],
-            cron='')
+            trigger='cron',
+            hour='*/2',
+            jitter=120)
+        app.logger.info(f'Job added. job_id={job_id}')
+
+    return job
 
 
 def unwatch_playlist(playlist_id):
     job_id = f'playlist_{playlist_id}'
-    scheduler.remove_job(job_id)
+    my_scheduler.remove_job(job_id)
+    app.logger.info(f'Job removed. job_id={job_id}')
 
 
-def _update_playlist(spotify_id, playlist_id):
+def update_playlist(spotify_id, playlist_id):
     spotify_user = SpotifyUser.find_user(id=spotify_id)
     spotify_token = spotify_user.api_token
     spotify_client = SpotifyClient(spotify_credentials, spotify_token)
@@ -183,7 +188,7 @@ def _revert_snapshot(new_playlist, snapshot):
             if py == ny:
                 old_tracks.append(ot)
             else:
-                y = y + 1
+                y = y + 1 # remove new track
             i = i + 1
         else:
             old_tracks.append(new_playlist['tracks'][y])
